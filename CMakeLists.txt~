@@ -1,0 +1,74 @@
+cmake_minimum_required(VERSION 2.8)
+project(Pipeline)
+
+set(CMAKE_CXX_STANDARD 11)
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -Wall -pedantic -Wextra")
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -Wall -pedantic -Wextra")
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0 -Wall -pedantic -Wextra")
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -Wall -pedantic -Wextra")
+
+find_package(Boost 1.54.0 COMPONENTS system thread REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GTK2 REQUIRED gtk+-2.0)
+
+include_directories(${GTK2_INCLUDE_DIRS})
+link_directories(${GTK2_LIBRARY_DIRS})
+add_definitions(${GTK2_CFLAGS_OTHER})
+
+find_package(X11 REQUIRED)
+include_directories(${X11_INCLUDE_DIR})
+
+set(wxWidgets_CONFIGURATION gtk)
+find_package(wxWidgets COMPONENTS core base REQUIRED)
+include( "${wxWidgets_USE_FILE}" )
+
+find_package( OpenCV 3.1.0 EXACT REQUIRED )
+message("OPENCV_VERSION : ${OPENCV_VERSION}")
+
+find_package(Armadillo REQUIRED)
+include_directories(${ARMADILLO_INCLUDE_DIRS})
+
+#INCLUDE_DIRECTORIES ( "eigen" )
+#find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+
+option(USE_CUDA "Cuda compilation" OFF)
+
+if (USE_CUDA)
+    add_definitions(-DUSE_CUDA=1)
+    find_package(CUDA QUIET REQUIRED)
+else()
+    add_definitions(-DUSE_CUDA=0)
+endif()
+
+set(SOURCE_FILES
+        src/gui/gui_thread.cpp
+        src/gui/gui_thread.h
+        src/gui/widgets.cpp
+        src/gui/widgets.h
+        src/ti/ti_thread.cpp
+        src/ti/ti_thread.h
+        src/util/debug.h
+        src/util/exceptions.h
+        src/util/threads.cpp
+        src/util/threads.h
+        src/util/timeClock.cpp
+        src/util/timeClock.h
+        src/main.cpp
+        src/imageProcessing/cpuDsp.cpp
+        src/imageProcessing/cpuDsp.h
+        src/imageProcessing/cudaDsp.cu
+        src/imageProcessing/cudaDsp.h
+        src/imageProcessing/stabilisation.cpp
+        src/imageProcessing/stabilisation.h
+        src/imageProcessing/imageStabKalman.cpp
+        src/ti/camera.cpp
+        src/ti/camera.h src/imageProcessing/imageStabKalman.h)
+
+if(USE_CUDA)
+    cuda_add_executable(Pipeline ${SOURCE_FILES})
+else()
+    add_executable(Pipeline ${SOURCE_FILES})
+endif()
+target_link_libraries(Pipeline ${Boost_LIBRARIES} ${GTK2_LIBRARIES} ${wxWidgets_LIBRARIES} ${OpenCV_LIBS} ${X11_LIBRARIES} ${ARMADILLO_LIBRARIES})
