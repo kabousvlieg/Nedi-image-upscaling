@@ -32,11 +32,11 @@ private:
     TiDspInfo info;
 
     void updateFrameRate();
-    void displayResults(cv::Mat& originalFrame, cv::Mat& nnFrame, cv::Mat& biqFrame, cv::Mat& nediFrame);
+    void displayResults(cv::Mat& originalFrame, cv::Mat& nnFrame, cv::Mat& biqFrame, cv::Mat& nediFrame, cv::Mat& bilinearFrame);
     void handleGuiCommand(ToTiDspThread TiMsg);
     void printMat(cv::Mat& mat);
     void calculateHistogram(cv::Mat& frame);
 
-    void processFrame(cv::Mat &frame, cv::Mat &originalFrame, cv::Mat &nnFrame, cv::Mat &biqFrame, cv::Mat &nediFrame);
+    void processFrame(cv::Mat &frame, cv::Mat &originalFrame, cv::Mat &nnFrame, cv::Mat &biqFrame, cv::Mat &nediFrame, cv::Mat &bilinearFrame);
 };
 

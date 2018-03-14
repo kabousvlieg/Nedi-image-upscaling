@@ -41,22 +41,25 @@ void TiDsp_thread::run(void)
         cv::moveWindow("Biqubic", 750, 0);
         cv::namedWindow("Nedi", cv::WINDOW_AUTOSIZE);
         cv::moveWindow("Nedi", 750, 600);
+        cv::namedWindow("Bilinear", cv::WINDOW_AUTOSIZE);
+        cv::moveWindow("Bilinear", 10, 10);
 
         imshow("Original", dummy);
         imshow("Nearest neighbour", dummy);
         imshow("Biqubic", dummy);
         imshow("Nedi", dummy);
+        imshow("Bilinear", dummy);
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
         for (;;)
         {
             static int framePosition = 0;
-            cv::Mat originalFrame, nnFrame, biqFrame, nediFrame;
+            cv::Mat originalFrame, nnFrame, biqFrame, nediFrame, bilinearFrame;
             Camera_thread::frameMutex[framePosition].lock();
             if (!Camera_thread::frameProcessed[framePosition])
             {
-                processFrame(Camera_thread::frame[framePosition], originalFrame, nnFrame, biqFrame, nediFrame);
+                processFrame(Camera_thread::frame[framePosition], originalFrame, nnFrame, biqFrame, nediFrame, bilinearFrame);
                 Camera_thread::frameProcessed[framePosition] = true;
                 Camera_thread::frameMutex[framePosition].unlock();
                 framePosition++;
@@ -96,18 +99,18 @@ void TiDsp_thread::run(void)
 	}
 }
 
-void TiDsp_thread::processFrame(cv::Mat &frame, cv::Mat &originalFrame, cv::Mat &nnFrame, cv::Mat &biqFrame, cv::Mat &nediFrame)
+void TiDsp_thread::processFrame(cv::Mat &frame, cv::Mat &originalFrame, cv::Mat &nnFrame, cv::Mat &biqFrame, cv::Mat &nediFrame, cv::Mat &bilinearFrame)
 {
 #if USE_CUDA
     cudaDsp::executeTiPipeline(frame, originalFrame, params, showComparisonWindows);
 #else
-    cpuDsp::executeTiPipeline(frame, originalFrame, nnFrame, biqFrame, nediFrame, params);
+    cpuDsp::executeTiPipeline(frame, originalFrame, nnFrame, biqFrame, nediFrame, bilinearFrame, params);
 #endif
 
     if (!frame.empty())
     {
         //calculateHistogram(frame);
-        displayResults(originalFrame, nnFrame, biqFrame, nediFrame);
+        displayResults(originalFrame, nnFrame, biqFrame, nediFrame, bilinearFrame);
     }
 
 }
@@ -127,13 +130,14 @@ void TiDsp_thread::updateFrameRate()
     }
 }
 
-void TiDsp_thread::displayResults(cv::Mat& originalFrame, cv::Mat& nnFrame, cv::Mat& biqFrame, cv::Mat& nediFrame)
+void TiDsp_thread::displayResults(cv::Mat& originalFrame, cv::Mat& nnFrame, cv::Mat& biqFrame, cv::Mat& nediFrame, cv::Mat& bilinearFrame)
 {
     wxMutexGuiEnter();
     imshow("Original", originalFrame);
     imshow("Nearest neighbour", nnFrame);
     imshow("Biqubic", biqFrame);
     imshow("Nedi", nediFrame);
+    imshow("Bilinear", bilinearFrame);
     wxMutexGuiLeave();
 }
 

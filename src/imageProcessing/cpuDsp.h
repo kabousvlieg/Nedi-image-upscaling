@@ -17,6 +17,7 @@ public:
                                   cv::Mat& nnFrame,
                                   cv::Mat& biqFrame,
                                   cv::Mat& nediFrame,
+                                  cv::Mat& bilinearFrame,
                                   TiDspParameters params);
     static void eZoom(cv::Mat &frame, TiDspParameters params);
 private:

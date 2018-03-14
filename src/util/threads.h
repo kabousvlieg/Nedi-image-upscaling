@@ -208,6 +208,8 @@ class threads
 public:
     static std::shared_ptr<threads> create(Threads t, Queues &qs); //Factory
     virtual void run(void) = 0;
+    static bool useCamera;
+    static std::string framePath;
 
 private:
 };

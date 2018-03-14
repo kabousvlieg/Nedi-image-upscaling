@@ -11,6 +11,9 @@
 #include <boost/thread.hpp>
 #include <boost/date_time.hpp>
 
+bool threads::useCamera = true;
+std::string threads::framePath = "";
+
 std::shared_ptr<threads> threads::create(Threads t, Queues &qs)
 {
     switch (t)
@@ -18,7 +21,7 @@ std::shared_ptr<threads> threads::create(Threads t, Queues &qs)
         case Threads::Gui_Thread:
             return std::shared_ptr<threads>(gui_thread::create(qs));
         case Threads::Ti_Thread_CameraBuffer:
-            return std::shared_ptr<threads>(new Camera_thread(qs.fromTiCameraToGui, qs.fromGuiToTiCamera));
+            return std::shared_ptr<threads>(new Camera_thread(qs.fromTiCameraToGui, qs.fromGuiToTiCamera, useCamera, framePath));
         case Threads::Ti_Thread_SignalProcessing:
             return std::shared_ptr<threads>(new TiDsp_thread(qs.fromTiDspToGui, qs.fromGuiToTiDsp));
     }

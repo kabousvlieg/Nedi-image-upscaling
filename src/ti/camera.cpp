@@ -25,13 +25,18 @@ bool Camera_thread::frameProcessed[FRAME_BUFFER_DEPTH];
 
 /* TiCamera_thread class ---------------------------------------------------------------------------------*/
 Camera_thread::Camera_thread(boost::lockfree::spsc_queue<FromTiCameraThread> &produce,
-                             boost::lockfree::spsc_queue<ToTiCameraThread> &consume)
+                             boost::lockfree::spsc_queue<ToTiCameraThread> &consume,
+                             bool camera,
+                             std::string path)
         : produceQ{produce}, consumeQ{consume}
 {
     for (int i = 0; i < FRAME_BUFFER_DEPTH; i++)
     {
         frameProcessed[i] = true;
     }
+
+    useCamera = camera;
+    framePath = path;
 
     std::cout << "OpenCV version : " << CV_MAJOR_VERSION << "." << CV_MINOR_VERSION << std::endl;
 #if not USE_CUDA
@@ -41,21 +46,30 @@ Camera_thread::Camera_thread(boost::lockfree::spsc_queue<FromTiCameraThread> &pr
 
 void Camera_thread::run(void)
 {
-    //Laptop webcam
     cv::VideoCapture cap;
-    cap.open(0);
-    cap.set(CV_CAP_PROP_FRAME_WIDTH, 640);
-    cap.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
+    cv::Mat staticFrame;
 
-    //Tegra webcam:
-    //cv::VideoCapture cap("nvcamerasrc ! video/x-raw(memory:NVMM), width=(int)1280, height=(int)1024,format=(string)I420, framerate=(fraction)30/1 ! nvvidconv flip-method=2 ! video/x-raw, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink"); //open the default camera
-
-    if (!cap.isOpened())
+    if (useCamera)
     {
-        std::cout << "Could not initialize capturing...\n";
-        return;
+        //Laptop webcam
+        cap.open(0);
+        cap.set(CV_CAP_PROP_FRAME_WIDTH, 640);
+        cap.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
+
+        //Tegra webcam:
+        //cv::VideoCapture cap("nvcamerasrc ! video/x-raw(memory:NVMM), width=(int)1280, height=(int)1024,format=(string)I420, framerate=(fraction)30/1 ! nvvidconv flip-method=2 ! video/x-raw, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink"); //open the default camera
+
+        if (!cap.isOpened())
+        {
+            std::cout << "Could not initialize capturing...\n";
+            return;
+        }
+        getFeedType(cap);
     }
-    getFeedType(cap);
+    else
+    {
+        staticFrame = cv::imread(framePath);
+    }
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
@@ -65,7 +79,13 @@ void Camera_thread::run(void)
         frameMutex[framePosition].lock();
         if (frameProcessed[framePosition])
         {
-            cap >> frame[framePosition];
+            if (useCamera)
+                cap >> frame[framePosition];
+            else
+            {
+                usleep(1000000.0/25); //Equal to 25 frames per second
+                staticFrame.copyTo(frame[framePosition]);
+            }
             if (frame[framePosition].empty())
             {
                 std::cout << "Frame empty, should not happen" << std::endl;

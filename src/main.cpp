@@ -33,6 +33,14 @@ int main(int argc, char **argv)
 		gdk_threads_init();
 		XInitThreads();
 		gtk_disable_setlocale();
+
+		if (argc == 1)
+			threads::useCamera = true;
+		else
+		{
+			threads::useCamera = false;
+			threads::framePath = argv[1];
+		}
 		spawnThreads();
 		for(;;)
 		{

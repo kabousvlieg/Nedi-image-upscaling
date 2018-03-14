@@ -17,7 +17,9 @@ class Camera_thread : public threads
 {
 public:
     Camera_thread(boost::lockfree::spsc_queue<FromTiCameraThread> &produce,
-                    boost::lockfree::spsc_queue<ToTiCameraThread> &consume);
+                  boost::lockfree::spsc_queue<ToTiCameraThread> &consume,
+                  bool camera,
+                  std::string path);
     void run(void) override;
 
     //Circular buffer implementation without copies (more efficient)
@@ -30,6 +32,8 @@ private:
     boost::lockfree::spsc_queue<FromTiCameraThread> &produceQ;
     boost::lockfree::spsc_queue<ToTiCameraThread> &consumeQ;
     TiCameraInfo info;
+    bool useCamera;
+    std::string framePath;
 
     void updateFrameRate();
     void getFeedType(cv::VideoCapture &cap);

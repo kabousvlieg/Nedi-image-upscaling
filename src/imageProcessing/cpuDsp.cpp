@@ -83,6 +83,7 @@ void cpuDsp::executeTiPipeline(cv::Mat& frame,
                                cv::Mat& nnFrame,
                                cv::Mat& biqFrame,
                                cv::Mat& nediFrame,
+                               cv::Mat& bilinearFrame,
                                TiDspParameters params)
 {
     static bool showStabilisation = false;
@@ -98,6 +99,7 @@ void cpuDsp::executeTiPipeline(cv::Mat& frame,
         frame.copyTo(nnFrame);
         frame.copyTo(biqFrame);
         frame.copyTo(nediFrame);
+        frame.copyTo(bilinearFrame);
         return;
     }
 
@@ -135,6 +137,7 @@ void cpuDsp::executeTiPipeline(cv::Mat& frame,
         frame.copyTo(nnFrame);
         frame.copyTo(biqFrame);
         frame.copyTo(nediFrame);
+        frame.copyTo(bilinearFrame);
         return;
     }
 
@@ -145,12 +148,15 @@ void cpuDsp::executeTiPipeline(cv::Mat& frame,
             frame.copyTo(nnFrame);
             frame.copyTo(biqFrame);
             frame.copyTo(nediFrame);
+            frame.copyTo(bilinearFrame);
         }
         else if (params.ezoom == Ezoom::x2)
         {
             cv::resize(frame, nnFrame, cv::Size(originalFrame.cols, originalFrame.rows), 0, 0, cv::INTER_NEAREST);
 
             cv::resize(frame, biqFrame, cv::Size(originalFrame.cols, originalFrame.rows), 0, 0, cv::INTER_CUBIC);
+
+            cv::resize(frame, bilinearFrame, cv::Size(originalFrame.cols, originalFrame.rows), 0, 0, cv::INTER_LINEAR);
 
             nediUpscale(frame, nediFrame);
         }
@@ -161,6 +167,9 @@ void cpuDsp::executeTiPipeline(cv::Mat& frame,
 
             cv::resize(frame, temp1, cv::Size(originalFrame.cols, originalFrame.rows), 0, 0, cv::INTER_CUBIC);
             cv::resize(temp1, biqFrame, cv::Size(originalFrame.cols, originalFrame.rows), 0, 0, cv::INTER_CUBIC);
+
+            cv::resize(frame, temp1, cv::Size(originalFrame.cols, originalFrame.rows), 0, 0, cv::INTER_LINEAR);
+            cv::resize(temp1, bilinearFrame, cv::Size(originalFrame.cols, originalFrame.rows), 0, 0, cv::INTER_LINEAR);
 
             nediUpscale(frame, temp1);
             nediUpscale(temp1, nediFrame);
@@ -175,6 +184,11 @@ void cpuDsp::executeTiPipeline(cv::Mat& frame,
             cv::resize(temp1, temp2, cv::Size(originalFrame.cols, originalFrame.rows), 0, 0, cv::INTER_CUBIC);
             cv::resize(temp2, biqFrame, cv::Size(originalFrame.cols, originalFrame.rows), 0, 0, cv::INTER_CUBIC);
 
+            cv::resize(frame, temp1, cv::Size(originalFrame.cols, originalFrame.rows), 0, 0, cv::INTER_LINEAR);
+            cv::resize(temp1, temp2, cv::Size(originalFrame.cols, originalFrame.rows), 0, 0, cv::INTER_LINEAR);
+            cv::resize(temp2, bilinearFrame, cv::Size(originalFrame.cols, originalFrame.rows), 0, 0, cv::INTER_LINEAR);
+
+
             nediUpscale(frame, temp1);
             nediUpscale(temp1, temp2);
             nediUpscale(temp2, nediFrame);
@@ -185,6 +199,7 @@ void cpuDsp::executeTiPipeline(cv::Mat& frame,
         frame.copyTo(nnFrame);
         frame.copyTo(biqFrame);
         frame.copyTo(nediFrame);
+        frame.copyTo(bilinearFrame);
     }
 
     if (params.outputSelect == OutputSelect::Upscale)
@@ -196,6 +211,7 @@ void cpuDsp::executeTiPipeline(cv::Mat& frame,
         edgeEnhance(nnFrame, params);
         edgeEnhance(biqFrame, params);
         edgeEnhance(nediFrame, params);
+        edgeEnhance(bilinearFrame, params);
     }
     if (params.outputSelect == OutputSelect::EdgeEnhance)
         return;
